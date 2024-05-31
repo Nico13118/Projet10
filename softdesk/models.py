@@ -15,3 +15,30 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
+
+
+class Project(models.Model):
+    TYPE = [
+        ('BA', 'back-end'),
+        ('FE', 'front-end'),
+        ('IOS', 'iOS'),
+        ('AND', 'Android')
+    ]
+    created_time = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey('User', on_delete=models.CASCADE, related_name='project_author')
+    contributors = models.ManyToManyField('User', through='Contributor', related_name='project_contributor')
+    project_name = models.CharField(max_length=200, blank=False)
+    project_description = models.TextField(max_length=8192, blank=False)
+    type = models.CharField(max_length=3, choices=TYPE, blank=False)
+
+    def __str__(self):
+        return self.project_name
+
+
+class Contributor(models.Model):
+    date_joined = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey('User', on_delete=models.CASCADE)
+    project = models.ForeignKey('Project', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.user} - {self.project}"
