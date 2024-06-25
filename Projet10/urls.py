@@ -18,10 +18,11 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from softdesk.views import RegisterUserViewset
+from softdesk.views import RegisterUserViewset, ProjectViewset
 
 router = routers.SimpleRouter()
 router.register('register', RegisterUserViewset, basename='register')
+router.register('project', ProjectViewset, basename='project')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
