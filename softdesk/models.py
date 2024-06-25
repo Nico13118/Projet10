@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth.models import AbstractUser
 
 
@@ -18,6 +18,7 @@ class User(AbstractUser):
 
 
 class Project(models.Model):
+    objects = models.Manager()
     TYPE = [
         ('BA', 'back-end'),
         ('FE', 'front-end'),
@@ -36,6 +37,7 @@ class Project(models.Model):
 
 
 class Contributor(models.Model):
+    objects = models.Manager()
     date_joined = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey('User', on_delete=models.CASCADE)
     project = models.ForeignKey('Project', on_delete=models.CASCADE)
