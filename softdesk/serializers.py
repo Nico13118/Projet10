@@ -19,6 +19,17 @@ class RegisterUserListSerializer(ModelSerializer):
             raise ValidationError('You are not old enough to register.')
         return value
 
+    def create(self, validated_data):
+        user = User(
+            username=validated_data['username'],
+            age=validated_data['age'],
+            can_be_contacted=validated_data['can_be_contacted'],
+            can_data_be_shared=validated_data['can_data_be_shared']
+        )
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
+
 
 class ProjectListSerializer(ModelSerializer):
 
