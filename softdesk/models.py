@@ -39,8 +39,8 @@ class Project(models.Model):
 class Contributor(models.Model):
     objects = models.Manager()
     date_joined = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey('User', on_delete=models.CASCADE)
-    project = models.ForeignKey('Project', on_delete=models.CASCADE)
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='contributor_user')
+    project = models.ForeignKey('Project', on_delete=models.CASCADE, related_name='contributor_project')
 
     def __str__(self):
         return f"{self.user} - {self.project}"
