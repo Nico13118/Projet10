@@ -2,10 +2,22 @@ from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import ModelViewSet
 from softdesk.models import User, Project, Contributor
 from softdesk.permissions import IsUserAuthenticated, IsSuperUser
-from softdesk.serializers import RegisterUserListSerializer, ProjectListSerializer, ContributorSerializer
+from softdesk.serializers import RegisterUserListSerializer, ProjectListSerializer, ContributorSerializer, \
+    ProjectDetailSerializer
 
 
-# ModelViewSet : create()`, `retrieve()`, `update()`, `partial_update()`, `destroy()`, `list()`
+# ModelViewSet : create()`, `retrieve()`, `update()`,
+# `partial_update()`, `destroy()`, `list()`
+
+class MultipleSerializerMixin(ModelViewSet):
+
+    detail_serializer_class = None
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve' and self.detail_serializer_class is not None:
+            return self.detail_serializer_class
+        return super().get_serializer_class()
+
 
 class RegisterUserViewset(ModelViewSet):
     queryset = User.objects.all()
@@ -20,12 +32,13 @@ class RegisterUserViewset(ModelViewSet):
         return super().get_permissions()
 
 
-class ProjectViewset(ModelViewSet):
+class ProjectViewset(MultipleSerializerMixin, ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectListSerializer
+    detail_serializer_class = ProjectDetailSerializer
 
     def get_permissions(self):
-        if self.action in ['create']:
+        if self.action in ['create', 'list', 'retrieve']:
             self.permission_classes = [IsUserAuthenticated]
         else:
             self.permission_classes = [IsSuperUser]
