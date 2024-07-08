@@ -40,6 +40,22 @@ class ProjectListSerializer(ModelSerializer):
         ]
 
 
+class ProjectDetailSerializer(ModelSerializer):
+
+    contributor_project = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Project
+        fields = [
+            'id', 'created_time', 'author', 'project_name', 'project_description', 'type', 'contributor_project'
+        ]
+
+    def get_contributor_project(self, instance):
+        queryset = instance.contributor_project.all()
+        serializer = ContributorSerializer(queryset, many=True)
+        return serializer.data
+
+
 class ContributorSerializer(ModelSerializer):
 
     class Meta:
