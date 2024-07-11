@@ -3,11 +3,11 @@ from rest_framework.viewsets import ModelViewSet
 from softdesk.models import User, Project, Contributor
 from softdesk.permissions import IsUserAuthenticated, IsSuperUser
 from softdesk.serializers import RegisterUserListSerializer, ProjectListSerializer, ContributorSerializer, \
-    ProjectDetailSerializer
-
+    ProjectDetailSerializer, ContributorDetailSerializer
 
 # ModelViewSet : create()`, `retrieve()`, `update()`,
 # `partial_update()`, `destroy()`, `list()`
+
 
 class MultipleSerializerMixin(ModelViewSet):
 
@@ -50,12 +50,13 @@ class ProjectViewset(MultipleSerializerMixin, ModelViewSet):
         Contributor.objects.create(user=self.request.user, project=project)
 
 
-class ContributorViewset(ModelViewSet):
+class ContributorViewset(MultipleSerializerMixin, ModelViewSet):
     queryset = Contributor.objects.all()
     serializer_class = ContributorSerializer
+    detail_serializer_class = ContributorDetailSerializer
 
     def get_permissions(self):
-        if self.action in ['create']:
+        if self.action in ['list', 'retrieve']:
             self.permission_classes = [IsUserAuthenticated]
         else:
             self.permission_classes = [IsSuperUser]
