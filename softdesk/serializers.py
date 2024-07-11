@@ -36,7 +36,7 @@ class RegisterUserListSerializer(ModelSerializer):
 
 class ProjectListSerializer(ModelSerializer):
     """
-    Permet d'avoir la liste des projets
+    Permet d'avoir la liste des projets de tous les auteurs.
     """
 
     class Meta:
@@ -78,10 +78,10 @@ class ContributorSerializer(ModelSerializer):
 
 
 class ContributorDetailSerializer(ModelSerializer):
+    """
+    Permet d'afficher le contributeur sélectionné et sa liste des projets.
+    """
 
-    """
-    Permet d'avoir le détail d'un contributeur et la liste des projets qu'il suit.
-    """
     projects = serializers.SerializerMethodField()
 
     class Meta:
@@ -93,6 +93,18 @@ class ContributorDetailSerializer(ModelSerializer):
     def get_projects(self, obj):
         projects = Contributor.objects.filter(user=obj.user)
 
-        return ContributorSerializer(projects, many=True).data
+        return ContributorProjectDetailSerializer(projects, many=True).data
+
+
+class ContributorProjectDetailSerializer(ModelSerializer):
+    """
+    Permet d'afficher la liste et détail des projets liés à un contributeur.
+    """
+
+    class Meta:
+        model = Contributor
+        fields = [
+            'id', 'project', 'date_joined'
+        ]
 
 
