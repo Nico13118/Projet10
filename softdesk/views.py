@@ -1,13 +1,30 @@
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import ModelViewSet
-from softdesk.models import User, Project, Contributor
+from softdesk.models import User, Project, Contributor, Issue
 from softdesk.permissions import IsUserAuthenticated, IsSuperUser
 from softdesk.serializers import RegisterUserListSerializer, ProjectListSerializer, ContributorSerializer, \
-    ProjectDetailSerializer, ContributorDetailSerializer
+    ProjectDetailSerializer, ContributorDetailSerializer, IssueSerializer
+
 
 # ModelViewSet : create()`, `retrieve()`, `update()`,
 # `partial_update()`, `destroy()`, `list()`
+
+
+class GetObjects:
+
+    @classmethod
+    def get_objects_all_models(cls, model_name, info_id=None):
+        """
+        Fonction à double utilité :
+        1) Si info_id est None : On retourne tous les objets selon le modèle spécifié (model_name).
+        2) Sinon : On retourne l'objet selon le modèle (model_name) et l'id spécifié (info_id).
+        """
+        if info_id is None:
+            obj_model = model_name.objects.all()
+        else:
+            obj_model = model_name.objects.get(id=info_id)
+        return obj_model
 
 
 class MultipleSerializerMixin(ModelViewSet):
@@ -33,7 +50,7 @@ class RegisterUserViewset(ModelViewSet):
 
 
 class ProjectViewset(MultipleSerializerMixin, ModelViewSet):
-    queryset = Project.objects.all()
+    queryset = GetObjects.get_objects_all_models(Project)
     serializer_class = ProjectListSerializer
     detail_serializer_class = ProjectDetailSerializer
 
@@ -51,7 +68,7 @@ class ProjectViewset(MultipleSerializerMixin, ModelViewSet):
 
 
 class ContributorViewset(MultipleSerializerMixin, ModelViewSet):
-    queryset = Contributor.objects.all()
+    queryset = GetObjects.get_objects_all_models(Contributor)
     serializer_class = ContributorSerializer
     detail_serializer_class = ContributorDetailSerializer
 
@@ -88,3 +105,46 @@ class ContributorViewset(MultipleSerializerMixin, ModelViewSet):
                 serializer.save(user=user_name, project=get_project_name)
         else:
             raise ValidationError("You are not allowed to add a contributor for this project.")
+
+
+class IssueViewset(ModelViewSet):
+    queryset = GetObjects.get_objects_all_models(Issue)
+    serializer_class = IssueSerializer
+
+    def get_permissions(self):
+        if self.action in ['create', 'list']:
+
+            self.permission_classes = [IsUserAuthenticated]
+        else:
+            self.permission_classes = [IsSuperUser]
+        return super().get_permissions()
+
+    def perform_create(self, serializer):
+        """
+        Avant l'enregistrement de l'issue, deux contrôles sont effectués : :
+        1) Vérifier que l'utilisateur connecté soit bien contributeur du projet selectionné dans le formulaire.
+        2) Vérifier que l'utilisateur sélectionné dans le formulaire est contributeur du projet
+        """
+        """ Récupérer l'objet de l'utilisateur connecté """
+        obj_user_auth = self.request.user
+        """ Récupérer l'objet du projet en provenance du formulaire"""
+        obj_project = GetObjects.get_objects_all_models(Project, self.request.data.get('project'))
+
+        exist_contributor_in_project = Contributor.objects.filter(user=obj_user_auth,
+                                                                  project=obj_project).exists()
+        """ Si l'utilisateur connecté est bien contributeur du projet et retourne True ou False """
+        if exist_contributor_in_project:
+            """ Récupérer l'objet de l'utilisateur assigné à l'Issue"""
+            obj_user_form = GetObjects.get_objects_all_models(User, self.request.data.get('assigned_contributor'))
+            exist_contributor_in_project2 = Contributor.objects.filter(user=obj_user_form,
+                                                                       project=obj_project).exists()
+            """ Si l'utilisateur selectionné dans le formulaire est bien contributeur du projet"""
+            if exist_contributor_in_project2:
+                serializer.save(author=obj_user_auth,
+                                assigned_contributor=obj_user_form,
+                                project=obj_project)
+            else:
+                raise ValidationError("The chosen user is not a contributor to this project.")
+
+        else:
+            raise ValidationError("You cannot create an Issue because you are not a contributor to this project.")
