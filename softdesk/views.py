@@ -2,7 +2,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import ModelViewSet
 from softdesk.models import User, Project, Contributor, Issue
-from softdesk.permissions import IsUserAuthenticated, IsSuperUser
+from softdesk.permissions import IsUserAuthenticated, IsSuperUser, IsContributor
 from softdesk.serializers import RegisterUserListSerializer, ProjectListSerializer, ContributorSerializer, \
     ProjectDetailSerializer, ContributorDetailSerializer, IssueSerializer
 
@@ -55,8 +55,12 @@ class ProjectViewset(MultipleSerializerMixin, ModelViewSet):
     detail_serializer_class = ProjectDetailSerializer
 
     def get_permissions(self):
-        if self.action in ['create', 'list', 'retrieve']:
+        if self.action in ['create', 'list']:
+            """ Seuls les utilisateurs authentifiés peuvent créer et voir la liste des projets """
             self.permission_classes = [IsUserAuthenticated]
+        elif self.action == 'retrieve':
+            """ Seuls les contributeurs peuvent accéder aux détails d'un projet"""
+            self.permission_classes = [IsContributor]
         else:
             self.permission_classes = [IsSuperUser]
 
