@@ -1,20 +1,4 @@
 from django.db import models, transaction
-from django.contrib.auth.models import AbstractUser
-
-
-class User(AbstractUser):
-    date_joined = models.DateTimeField(auto_now_add=True)
-    username = models.CharField(max_length=150, unique=True)
-    age = models.IntegerField(blank=False, default=0)
-    password = models.CharField(max_length=150, blank=False)
-    can_be_contacted = models.BooleanField(default=False)
-    can_data_be_shared = models.BooleanField(default=False)
-    is_staff = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
-    is_superuser = models.BooleanField(default=False)
-
-    def __str__(self):
-        return self.username
 
 
 class Project(models.Model):
@@ -44,3 +28,34 @@ class Contributor(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.project}"
+
+
+class Issue(models.Model):
+    objects = models.Manager()
+    PRIORITY = [
+        ('LOW', 'LOW'),
+        ('MEDIUM', 'MEDIUM'),
+        ('HIGH', 'HIGH')
+    ]
+    TAG = [
+        ('BUG', 'BUG'),
+        ('FEATURE', 'FEATURE'),
+        ('TASK', 'TASK')
+    ]
+    STATUS = [
+        ('TO DO', 'TO DO'),
+        ('IN PROGRESS', 'IN PROGRESS'),
+        ('FINISHED', 'FINISHED')
+    ]
+    created_time = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey('User', on_delete=models.CASCADE, related_name='author_issue')
+    assigned_contributor = models.ForeignKey('User', on_delete=models.CASCADE, blank=False)
+    issue_name = models.CharField(max_length=200, blank=False)
+    issue_description = models.TextField(max_length=8192, blank=False)
+    project = models.ForeignKey('Project', on_delete=models.CASCADE, related_name='project_issue')
+    priority = models.CharField(max_length=6, choices=PRIORITY, blank=False)
+    tag = models.CharField(max_length=7, choices=TAG, blank=False)
+    status = models.CharField(max_length=11, choices=STATUS, default='TO DO')
+
+    def __str__(self):
+        return f"{self.author} - {self.assigned_contributor} - {self.issue_name}"
